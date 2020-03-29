@@ -3,11 +3,7 @@ import speech_recognition as sr
 import fasttext
 
 def get_wordlists(LABELS):
-    LABELS = ["WHITE_ETHICS", "BLACK_ETHICS", 
-              "WHITE_LOGICS","BLACK_LOGICS",
-              "WHITE_SENSORICS","BLACK_SENSORICS",
-              "WHITE_INTUITION","BLACK_INTUITION"]
-
+  
     WHITE_ETHICS_WORD_LIST = []
     BLACK_ETHICS_WORD_LIST = []
     WHITE_LOGICS_WORD_LIST = []
@@ -16,19 +12,25 @@ def get_wordlists(LABELS):
     BLACK_SENSORICS_WORD_LIST = []
     WHITE_INTUITION_WORD_LIST = []
     BLACK_INTUITION_WORD_LIST = []
+    
+    word_lists = {
+        'WHITE_ETHICS_WORD_LIST': WHITE_ETHICS_WORD_LIST,
+        'BLACK_ETHICS_WORD_LIST': BLACK_ETHICS_WORD_LIST,
+        'WHITE_LOGICS_WORD_LIST': WHITE_LOGICS_WORD_LIST,
+        'BLACK_LOGICS_WORD_LIST': BLACK_LOGICS_WORD_LIST,
+        'WHITE_SENSORICS_WORD_LIST': WHITE_SENSORICS_WORD_LIST,
+        'BLACK_SENSORICS_WORD_LIST': BLACK_SENSORICS_WORD_LIST,
+        'WHITE_INTUITION_WORD_LIST': WHITE_INTUITION_WORD_LIST,
+        'BLACK_INTUITION_WORD_LIST': BLACK_INTUITION_WORD_LIST
+    }
 
-    for label, word_list in zip(LABELS, [WHITE_ETHICS_WORD_LIST, 
-                                         BLACK_ETHICS_WORD_LIST, 
-                                         WHITE_LOGICS_WORD_LIST, 
-                                         BLACK_LOGICS_WORD_LIST, 
-                                         WHITE_SENSORICS_WORD_LIST, 
-                                         BLACK_SENSORICS_WORD_LIST, 
-                                         WHITE_INTUITION_WORD_LIST, 
-                                         BLACK_INTUITION_WORD_LIST]):
+    for label in LABELS:
+        raw_phrases = []
         with open(label + "_WORD_LIST.txt", "r", encoding = 'utf-16') as file:
-            word_list = file.readlines()
-        for i in range(len(word_list)):
-            word_list[i] = word_list[i].replace("\n", "").lower()
+            raw_phrases = file.readlines()
+        for phrase in raw_phrases:
+            phrase = phrase.replace("\n", "").replace("\t", "").lower().strip()
+            word_lists[label + '_WORD_LIST'].append(phrase)
         file.close()
     WHITE_ETHICS_WORD_LIST = list(set(WHITE_ETHICS_WORD_LIST))
     BLACK_ETHICS_WORD_LIST = list(set(BLACK_ETHICS_WORD_LIST))
@@ -48,15 +50,30 @@ def get_wordlists(LABELS):
         'WHITE_INTUITION_WORD_LIST': WHITE_INTUITION_WORD_LIST,
         'BLACK_INTUITION_WORD_LIST': BLACK_INTUITION_WORD_LIST
     }
+def intersect(lst1, lst2): 
+    lst3 = [value for value in lst1 if value in lst2] 
+    return lst3
 
+def get_all_intersections(word_lists):
+    intersections = []
+    for lst1, lst_name1 in zip(list(word_lists.values()), 
+                               list(word_lists.keys())):
+        for lst2, lst_name2 in zip(list(word_lists.values()), 
+                                   list(word_lists.keys())):
+            if lst_name1 != lst_name2 and len(intersect(lst1, lst2)) != 0:
+                intersections.extend(intersect(lst1, lst2))
+#                 print(lst_name1, lst_name2, f"intersections {intersect(lst1, lst2)}")
+    return list(set(intersections))
 
-def train_socionics_fasttext_model(save_model = True, 
-                                   LABELS,
-                                   word_lists = {}):
+def train_socionics_fasttext_model(LABELS,
+                                   word_lists = {},
+                                   save_model = True):
+    intersections = get_all_intersections(word_lists) # for a while not training intersections until resolve them
     with open('socionics_fasttext_train_data.txt', 'w', encoding='utf-16') as file:
         for label, word_list in zip(LABELS, list(word_lists.values())):
-            for i in range(len(word_list):
-                file.write('{} {}\n'.format(word_list[i], f"__{label}__"))
+            for i in range(len(word_list)):
+                if word_list[i] not in intersections:
+                    file.write('{} {}\n'.format(word_list[i], f"__{label}__"))
     
     model = fasttext.train_supervised(verbose=0, 
                                       input='socionics_fasttext_train_data.txt',
@@ -78,9 +95,9 @@ def get_phrases_from_text(text):
     phrases = words_from_text + two_grams
     return phrases
 
-def predict_all(model=fasttext.load_model("socionics_fasttext_model.ckpt"), 
-                phrases,
-                word_lists):
+def predict_all(phrases,
+                word_lists,
+                model=fasttext.load_model("socionics_fasttext_model.ckpt")):
     WHITE_ETHICS = 0
     BLACK_ETHICS = 0
     WHITE_LOGICS = 0
@@ -159,14 +176,15 @@ def record_speech_and_recognize():
         pass
     return text
     
+
 if __name__ == '__main__':
     LABELS = ["WHITE_ETHICS", "BLACK_ETHICS", 
-          "WHITE_LOGICS","BLACK_LOGICS",
-          "WHITE_SENSORICS","BLACK_SENSORICS",
-          "WHITE_INTUITION","BLACK_INTUITION"]s
-    text = record_speech_and_recognize()
-    phrases = get_phrases_from_text(text)
+              "WHITE_LOGICS","BLACK_LOGICS",
+              "WHITE_SENSORICS","BLACK_SENSORICS",
+              "WHITE_INTUITION","BLACK_INTUITION"]
+    # text = record_speech_and_recognize()
+    # phrases = get_phrases_from_text(text)
     word_lists = get_wordlists(LABELS)
     train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
-    results = predict_all(phrases=phrases, word_lists=word_lists)
-    analyse_results(LABELS=LABELS, results=results)
+    # results = predict_all(phrases=phrases, word_lists=word_lists)
+    # analyse_results(LABELS=LABELS, results=results)
