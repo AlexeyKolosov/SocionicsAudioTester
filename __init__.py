@@ -73,7 +73,7 @@ def train_socionics_fasttext_model(LABELS,
         for label, word_list in zip(LABELS, list(word_lists.values())):
             for i in range(len(word_list)):
                 if word_list[i] not in intersections:
-                    file.write('{} {}\n'.format(word_list[i], f"__{label}__"))
+                    file.write('{} {}\n'.format(word_list[i], f"__label__{label}"))
     
     model = fasttext.train_supervised(verbose=0, 
                                       input='socionics_fasttext_train_data.txt',
@@ -97,7 +97,7 @@ def get_phrases_from_text(text):
 
 def predict_all(phrases,
                 word_lists,
-                model=fasttext.load_model("socionics_fasttext_model.ckpt")):
+                model):
     WHITE_ETHICS = 0
     BLACK_ETHICS = 0
     WHITE_LOGICS = 0
@@ -186,5 +186,5 @@ if __name__ == '__main__':
     # phrases = get_phrases_from_text(text)
     word_lists = get_wordlists(LABELS)
     train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
-    # results = predict_all(phrases=phrases, word_lists=word_lists)
+    # results = predict_all(phrases=phrases, word_lists=word_lists, model=fasttext.load_model("socionics_fasttext_model.ckpt"))
     # analyse_results(LABELS=LABELS, results=results)
