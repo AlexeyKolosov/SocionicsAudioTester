@@ -97,7 +97,7 @@ def get_phrases_from_text(text):
 
 def predict_all(phrases,
                 word_lists,
-                model):
+                model=None):
     WHITE_ETHICS = 0
     BLACK_ETHICS = 0
     WHITE_LOGICS = 0
@@ -108,24 +108,25 @@ def predict_all(phrases,
     BLACK_INTUITION = 0                    
     for phrase in phrases:    
         # to do: implement lemmatizer before predict
-        data = model.predict(phrase, k=1)
-        predicted_label = str(data[0][0].replace('__label__', ''))
-        if predicted_label == 'WHITE_ETHICS':
-            WHITE_ETHICS = WHITE_ETHICS + 1
-        elif predicted_label == 'BLACK_ETHICS':
-            BLACK_ETHICS = BLACK_ETHICS + 1
-        elif predicted_label == 'WHITE_LOGICS':
-            WHITE_LOGICS = WHITE_LOGICS + 1
-        elif predicted_label == 'BLACK_LOGICS':
-            BLACK_LOGICS = BLACK_LOGICS + 1
-        elif predicted_label == 'WHITE_SENSORICS':
-            WHITE_SENSORICS = WHITE_SENSORICS + 1
-        elif predicted_label == 'BLACK_SENSORICS':
-            BLACK_SENSORICS = BLACK_SENSORICS + 1
-        elif predicted_label == 'WHITE_INTUITION':
-            WHITE_INTUITION = WHITE_INTUITION + 1
-        elif predicted_label == 'BLACK_INTUITION':
-            BLACK_INTUITION = BLACK_INTUITION + 1
+        if model is not None:
+            data = model.predict(phrase, k=1)
+            predicted_label = str(data[0][0].replace('__label__', ''))
+            if predicted_label == 'WHITE_ETHICS':
+                WHITE_ETHICS = WHITE_ETHICS + 1
+            elif predicted_label == 'BLACK_ETHICS':
+                BLACK_ETHICS = BLACK_ETHICS + 1
+            elif predicted_label == 'WHITE_LOGICS':
+                WHITE_LOGICS = WHITE_LOGICS + 1
+            elif predicted_label == 'BLACK_LOGICS':
+                BLACK_LOGICS = BLACK_LOGICS + 1
+            elif predicted_label == 'WHITE_SENSORICS':
+                WHITE_SENSORICS = WHITE_SENSORICS + 1
+            elif predicted_label == 'BLACK_SENSORICS':
+                BLACK_SENSORICS = BLACK_SENSORICS + 1
+            elif predicted_label == 'WHITE_INTUITION':
+                WHITE_INTUITION = WHITE_INTUITION + 1
+            elif predicted_label == 'BLACK_INTUITION':
+                BLACK_INTUITION = BLACK_INTUITION + 1
         #======= manual_check_in_word_lists ==========
         if phrase in word_lists['WHITE_ETHICS_WORD_LIST']:
             WHITE_ETHICS = WHITE_ETHICS + 1
@@ -182,9 +183,10 @@ if __name__ == '__main__':
               "WHITE_LOGICS","BLACK_LOGICS",
               "WHITE_SENSORICS","BLACK_SENSORICS",
               "WHITE_INTUITION","BLACK_INTUITION"]
-    # text = record_speech_and_recognize()
-    # phrases = get_phrases_from_text(text)
+    text = record_speech_and_recognize()
+    phrases = get_phrases_from_text(text)
     word_lists = get_wordlists(LABELS)
-    train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
-    # results = predict_all(phrases=phrases, word_lists=word_lists, model=fasttext.load_model("socionics_fasttext_model.ckpt"))
-    # analyse_results(LABELS=LABELS, results=results)
+    # train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
+    # model=fasttext.load_model("socionics_fasttext_model.ckpt")
+    results = predict_all(phrases=phrases, word_lists=word_lists)
+    analyse_results(LABELS=LABELS, results=results)
