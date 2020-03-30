@@ -1,6 +1,7 @@
 from nltk.util import ngrams
 import speech_recognition as sr
 import fasttext
+import fasttext.util
 
 def get_wordlists(LABELS):
   
@@ -74,7 +75,7 @@ def train_socionics_fasttext_model(LABELS,
             for i in range(len(word_list)):
                 if word_list[i] not in intersections:
                     file.write('{} {}\n'.format(word_list[i], f"__label__{label}"))
-    
+
     model = fasttext.train_supervised(verbose=0, 
                                       input='socionics_fasttext_train_data.txt',
                                       thread=1, 
@@ -82,7 +83,9 @@ def train_socionics_fasttext_model(LABELS,
                                       wordNgrams=1, 
                                       lr=0.1, 
                                       epoch=80, 
-                                      loss='softmax')
+                                      loss='softmax',
+                                      pretrainedVectors='cc.ru.300.vec',
+                                      dim=300)
     if save_model is True:
         model.save_model("socionics_fasttext_model.ckpt")
         
@@ -183,10 +186,10 @@ if __name__ == '__main__':
               "WHITE_LOGICS","BLACK_LOGICS",
               "WHITE_SENSORICS","BLACK_SENSORICS",
               "WHITE_INTUITION","BLACK_INTUITION"]
-    text = record_speech_and_recognize()
-    phrases = get_phrases_from_text(text)
+    # text = record_speech_and_recognize()
+    # phrases = get_phrases_from_text(text)
     word_lists = get_wordlists(LABELS)
-    # train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
+    train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
     # model=fasttext.load_model("socionics_fasttext_model.ckpt")
-    results = predict_all(phrases=phrases, word_lists=word_lists)
-    analyse_results(LABELS=LABELS, results=results)
+    # results = predict_all(phrases=phrases, word_lists=word_lists)
+    # analyse_results(LABELS=LABELS, results=results)
