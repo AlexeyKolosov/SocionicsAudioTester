@@ -70,13 +70,13 @@ def train_socionics_fasttext_model(LABELS,
                                    word_lists = {},
                                    save_model = True):
     intersections = get_all_intersections(word_lists) # for a while not training intersections until resolve them
-    with open('socionics_fasttext_train_data.txt', 'w', encoding='utf-16') as file:
+    with open('socionics_fasttext_train_data.txt', 'w', encoding='utf-8') as file:
         for label, word_list in zip(LABELS, list(word_lists.values())):
             for i in range(len(word_list)):
                 if word_list[i] not in intersections:
                     file.write('{} {}\n'.format(word_list[i], f"__label__{label}"))
 
-    model = fasttext.train_supervised(verbose=0, 
+    model = fasttext.train_supervised(verbose=3, 
                                       input='socionics_fasttext_train_data.txt',
                                       thread=1, 
                                       minCount=1, 
@@ -87,7 +87,7 @@ def train_socionics_fasttext_model(LABELS,
                                       pretrainedVectors='cc.ru.300.vec',
                                       dim=300)
     if save_model is True:
-        model.save_model("socionics_fasttext_model.ckpt")
+        model.save_model("socionics_fasttext_model1.ckpt")
         
 def get_phrases_from_text(text):
     # for a while returns only words and 2-grams
@@ -191,5 +191,5 @@ if __name__ == '__main__':
     word_lists = get_wordlists(LABELS)
     train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
     # model=fasttext.load_model("socionics_fasttext_model.ckpt")
-    # results = predict_all(phrases=phrases, word_lists=word_lists)
+    # results = predict_all(phrases=phrases, word_lists=word_lists, model=model)
     # analyse_results(LABELS=LABELS, results=results)
