@@ -112,6 +112,8 @@ class RemainingTimeEstimator(object):
 def predict_all(phrases,
                 word_lists,
                 model=None):
+    logs = []
+    
     WHITE_ETHICS = 0
     BLACK_ETHICS = 0
     WHITE_LOGICS = 0
@@ -140,6 +142,8 @@ def predict_all(phrases,
         if model is not None:
             data = model.predict(phrase, k=1)
             predicted_label = str(data[0][0].replace('__label__', ''))
+            confidence = str(int(data[1][0]*100)) + "%"
+            logs.append("%-60s %s %5s" % (phrase, predicted_label, confidence))
             if predicted_label == 'WHITE_ETHICS':
                 WHITE_ETHICS = WHITE_ETHICS + 1
             elif predicted_label == 'BLACK_ETHICS':
@@ -197,7 +201,8 @@ def predict_all(phrases,
              ws_from_wl,
              bs_from_wl,
              wi_from_wl,
-             bi_from_wl]]
+             bi_from_wl],
+            logs]
             
 def analyse_results(LABELS, results):
 
@@ -209,7 +214,11 @@ def analyse_results(LABELS, results):
     values_sorted, labels_sorted = zip(*sorted(zip(results[1], LABELS), reverse=True))
     print("### AMONG THEM WERE FROM WORD LISTS ###\n\n")
     for c1, c2 in zip(labels_sorted, values_sorted):
-        print("%-20s %s" % (c1, c2))                                        
+        print("%-20s %s" % (c1, c2))  
+
+    print_logs = str(input("\nPRINT LOGS? Y/N\n")).lower()
+    if print_logs == 'y':
+        print(*results[2], sep = "\n")
     
 def record_speech_and_recognize():
     r = sr.Recognizer()
