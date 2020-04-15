@@ -2,6 +2,7 @@ from nltk.util import ngrams
 import speech_recognition as sr
 import fasttext
 import fasttext.util
+import datetime
 
 def get_wordlists(LABELS):
   
@@ -97,6 +98,16 @@ def get_phrases_from_text(text):
         two_grams.append(" ".join(two_gram))
     phrases = words_from_text + two_grams
     return phrases
+    
+class RemainingTimeEstimator(object):
+    def __init__(self, total):
+        self.start = datetime.datetime.now()
+        self.total = total 
+    def remains(self, done):
+        now  = datetime.datetime.now()
+        left = (self.total - done) * (now - self.start) / done
+        sec = int(left.total_seconds())
+        return "{} minutes".format(int(sec / 60))
 
 def predict_all(phrases,
                 word_lists,
@@ -108,8 +119,23 @@ def predict_all(phrases,
     WHITE_SENSORICS = 0
     BLACK_SENSORICS = 0
     WHITE_INTUITION = 0
-    BLACK_INTUITION = 0                    
-    for phrase in phrases:    
+    BLACK_INTUITION = 0
+    
+    we_from_wl = 0
+    be_from_wl = 0
+    wl_from_wl = 0
+    bl_from_wl = 0
+    ws_from_wl = 0
+    bs_from_wl = 0
+    wi_from_wl = 0
+    bi_from_wl = 0
+    
+    step = 1
+    num_steps = len(phrases)
+    t = RemainingTimeEstimator(num_steps)
+    for phrase in phrases: 
+        print(f"TEXT PROCESSING: ESTIMATE OF REMAINING TIME: {t.remains(step)}; STEP {step} OF {num_steps}......", end="\r")
+        step += 1
         # to do: implement lemmatizer before predict
         if model is not None:
             data = model.predict(phrase, k=1)
@@ -133,51 +159,75 @@ def predict_all(phrases,
         #======= manual_check_in_word_lists ==========
         if phrase in word_lists['WHITE_ETHICS_WORD_LIST']:
             WHITE_ETHICS = WHITE_ETHICS + 1
-        elif phrase in word_lists['BLACK_ETHICS_WORD_LIST']:
+            we_from_wl += 1
+        if phrase in word_lists['BLACK_ETHICS_WORD_LIST']:
             BLACK_ETHICS = BLACK_ETHICS + 1
-        elif phrase in word_lists['WHITE_LOGICS_WORD_LIST']:
+            be_from_wl += 1
+        if phrase in word_lists['WHITE_LOGICS_WORD_LIST']:
             WHITE_LOGICS = WHITE_LOGICS + 1
-        elif phrase in word_lists['BLACK_LOGICS_WORD_LIST']:
+            wl_from_wl += 1
+        if phrase in word_lists['BLACK_LOGICS_WORD_LIST']:
             BLACK_LOGICS = BLACK_LOGICS + 1
-        elif phrase in word_lists['WHITE_SENSORICS_WORD_LIST']:
+            bl_from_wl += 1
+        if phrase in word_lists['WHITE_SENSORICS_WORD_LIST']:
             WHITE_SENSORICS = WHITE_SENSORICS + 1
-        elif phrase in word_lists['BLACK_SENSORICS_WORD_LIST']:
+            ws_from_wl += 1
+        if phrase in word_lists['BLACK_SENSORICS_WORD_LIST']:
             BLACK_SENSORICS = BLACK_SENSORICS + 1
-        elif phrase in word_lists['WHITE_INTUITION_WORD_LIST']:
+            bs_from_wl += 1
+        if phrase in word_lists['WHITE_INTUITION_WORD_LIST']:
             WHITE_INTUITION = WHITE_INTUITION + 1
-        elif phrase in word_lists['BLACK_INTUITION_WORD_LIST']:
+            wi_from_wl += 1
+        if phrase in word_lists['BLACK_INTUITION_WORD_LIST']:
             BLACK_INTUITION = BLACK_INTUITION + 1
-    return [WHITE_ETHICS, 
-            BLACK_ETHICS, 
-            WHITE_LOGICS,
-            BLACK_LOGICS,
-            WHITE_SENSORICS,
-            BLACK_SENSORICS,
-            WHITE_INTUITION, 
-            BLACK_INTUITION] 
+            bi_from_wl += 1
+    print()
+    return [[WHITE_ETHICS, 
+             BLACK_ETHICS, 
+             WHITE_LOGICS,
+             BLACK_LOGICS,
+             WHITE_SENSORICS,
+             BLACK_SENSORICS,
+             WHITE_INTUITION, 
+             BLACK_INTUITION],
+            [we_from_wl,
+             be_from_wl,
+             wl_from_wl,
+             bl_from_wl,
+             ws_from_wl,
+             bs_from_wl,
+             wi_from_wl,
+             bi_from_wl]]
             
-def analyse_results(LABELS, results = [0,0,0,0,0,0,0,0]):
-    # max({WHITE_ETHICS:"WHITE_ETHICS",BLACK_ETHICS:"BLACK_ETHICS"})
-    # max({WHITE_LOGICS:"WHITE_LOGICS",BLACK_LOGICS:"BLACK_LOGICS"})
-    # max({WHITE_SENSORICS:"WHITE_SENSORICS",BLACK_SENSORICS:"BLACK_SENSORICS"})
-    # max({WHITE_INTUITION:"WHITE_INTUITION",BLACK_INTUITION:"BLACK_INTUITION"})
+def analyse_results(LABELS, results):
 
-    values_sorted, labels_sorted = zip(*sorted(zip(results, LABELS), 
-                                               reverse=True))
-    print("your strong sides are ", labels_sorted[:2])
+    values_sorted, labels_sorted = zip(*sorted(zip(results[0], LABELS), reverse=True))
+    print("### SUCCSESSFULLY ANALIZED SOCIONIC ASPECTS OF YOUR SPEECH###\n\n")
+    for c1, c2 in zip(labels_sorted, values_sorted):
+        print("%-20s %s" % (c1, c2))
+        
+    values_sorted, labels_sorted = zip(*sorted(zip(results[1], LABELS), reverse=True))
+    print("### AMONG THEM WERE FROM WORD LISTS ###\n\n")
+    for c1, c2 in zip(labels_sorted, values_sorted):
+        print("%-20s %s" % (c1, c2))                                        
     
 def record_speech_and_recognize():
     r = sr.Recognizer()
     text = ""
+    stop_listen = False
     with sr.Microphone() as source:
-        print("SAY SOMETHING")
-        audio = r.listen(source)
-        print("TIME OVER, THANKS")
-    try:
-        text = r.recognize_google(audio, language = 'ru-RU')
-        print("TEXT: ", text)
-    except:
-        pass
+        while stop_listen is False:
+            print("ADD RECORD, SAY SOMETHING")
+            audio = r.listen(source)
+            print("RECORDING FINISHED, RECORD ADDED")
+            try:
+                text += " " + r.recognize_google(audio, language = 'ru-RU')
+                print("TEXT: ", text.lower())
+                print("WOULD YOU LIKE TO ADD NEW RECORD? Y/N")
+                key = input()
+                stop_listen = True if str(key).lower() == 'n' else False
+            except:
+                pass
     return text
     
 
@@ -186,10 +236,10 @@ if __name__ == '__main__':
               "WHITE_LOGICS","BLACK_LOGICS",
               "WHITE_SENSORICS","BLACK_SENSORICS",
               "WHITE_INTUITION","BLACK_INTUITION"]
-    # text = record_speech_and_recognize()
-    # phrases = get_phrases_from_text(text)
+    text = record_speech_and_recognize()
+    phrases = get_phrases_from_text(text)
     word_lists = get_wordlists(LABELS)
-    train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
-    # model=fasttext.load_model("socionics_fasttext_model.ckpt")
-    # results = predict_all(phrases=phrases, word_lists=word_lists, model=model)
-    # analyse_results(LABELS=LABELS, results=results)
+    # train_socionics_fasttext_model(LABELS=LABELS, word_lists=word_lists)
+    model=fasttext.load_model("socionics_fasttext_model.ckpt")
+    results = predict_all(phrases=phrases, word_lists=word_lists, model=model)
+    analyse_results(LABELS=LABELS, results=results)
