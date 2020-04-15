@@ -1,7 +1,9 @@
-# SocionicsAudioTester
+# Socionics Audio Tester
 Python tool for determining the strong socionic type aspects based on Russian speech
 
-Tested on python 3.6.6
+Tested with python 3.6.6
+
+FastText pretrained model: https://yadi.sk/d/vWYBp_VTy_wdLQ
 
 Quick algorithm:
 - Russian speech recording
