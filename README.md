@@ -4,6 +4,7 @@ Python tool for determining the strong socionic type aspects based on Russian sp
 Tested with python 3.6.6
 
 pip install -r requirements.txt
+
 move FastText pretrained model: https://yadi.sk/d/vWYBp_VTy_wdLQ into the repo directory
 
 Quick algorithm:
