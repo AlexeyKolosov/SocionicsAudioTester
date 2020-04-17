@@ -1,0 +1,5 @@
+fasttext==0.9.1
+nltk==3.4.5
+PyAudio==0.2.11
+pybind11>=2.2
+SpeechRecognition==3.8.1
